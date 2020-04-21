@@ -24,6 +24,7 @@ pub enum AstTime {
 }
 
 /// Argument for a command.
+#[derive(PartialEq)]
 pub enum AstArgument {
     /// No arguments.
     None,
@@ -42,6 +43,7 @@ pub enum AstArgument {
 }
 
 /// A command switch.
+#[derive(PartialEq)]
 pub enum AstSwitch {
     /// An enabling switch.
     On(String),
@@ -60,6 +62,7 @@ pub enum AstBlock {
 }
 
 /// A name in the AST.
+#[derive(PartialEq)]
 pub enum AstName {
     /// Placeholder name, used by macros.
     Placeholder,
@@ -172,6 +175,19 @@ impl AstBlock {
         }
     }
 
+}
+
+impl PartialEq for AstBlock {
+	fn eq(&self, other: &Self) -> bool {
+		// blocks cannot be compared.
+		return false;
+	}
+}
+
+impl Hash for AstBlock {
+	fn hash<H: Hasher>(&self, _: &mut H) {
+		// blocks cannot be hashed
+	}
 }
 
 impl AstName {

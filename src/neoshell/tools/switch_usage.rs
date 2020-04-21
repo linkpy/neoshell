@@ -41,15 +41,19 @@ pub struct TernarySwitch<T> {
 	disabled: T,
 }
 
+/// Switch that can have multiple values, only one at a time. Only supports the option switches.
 pub struct ChoiceOptionSwitch<T> {
 	initial: T,
-	values: Vec<T>,
+	values: Vec<(AstArgument, T)>,
 }
 
+/// Switch that can have multiple values, multiple at one time. Only supports the option switches.
 pub struct MultiChoiceOptionSwitch<T> {
 	initial: T,
-	values: Vec<T>,
+	values: Vec<(AstArgument, T)>,
 }
+
+
 
 
 
