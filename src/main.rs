@@ -15,6 +15,9 @@ puts "wooooohoooooo !!!";
 
 "#;
 
+#[macro_use] extern crate failure;
+
+
 
 struct PutsCommand { }
 impl RuntimeCommand for PutsCommand {
