@@ -2,6 +2,37 @@
 # Neoshell Language Specification
 
  - [1. Syntax](#1-syntax)
+   - [1.1. Commands](#11-commands)
+     - [1.1.1. Piping](#111-piping)
+	 - [1.1.2. Arguments](#112-arguments)
+   - [1.2. Blocks](#12-blocks)
+   - [1.3. Expressions](#13-expressions)
+   - [1.4. Descriptors](#14-descriptors)
+     - [1.4.1. Argument descriptors](#141-argument-descriptors)
+	   - [1.4.1.1. Positional argument descriptors](#1411-positional-argument-descriptor)
+	   - [1.4.1.2. Positional list argument descriptors](#1411-positional-list-argument-descriptor)
+	   - [1.4.1.3. Flag argument descriptors](#1413-flag-argument-descriptor)
+	   - [1.4.1.4. Option argument descriptors](#1414-option-argument-descriptor)
+	   - [1.4.1.5. List argument descriptors](#1415-list-argument-descriptor)
+	   - [1.4.1.6. Choice argument descriptors](#1416-choice-argument-descriptor)
+	   - [1.4.1.7. Named choice argument descriptors](#1417-named-choice-argument-descriptor)
+	   - [1.4.1.8. Multi-choice argument descriptors](#1418-multi-choice-argument-descriptor)
+	   - [1.4.1.9. Named multi-choice argument descriptors](#1419-named-multi-choice-argument-descriptor)
+   - [1.5. Literals](#15-literals)
+	 - [1.5.1. Strings](#151-strings)
+	 - [1.5.2. Numbers](#152-numbers)
+	   - [1.5.2.1. Integers](#1521-integers)
+	   - [1.5.2.2. Floats](#1522-floats)
+   - [1.6. Packages](#16-packages)
+   - [1.7. Variables](#17-variables)
+   - [1.8. Placeholders](#18-placeholders)
+ - [2. Language's constructs](#2-language-s-constructs)
+   - [2.1. Commands](#21-commands)
+     - [2.1.1. Execution times](#211-execution-times)
+	 - [2.1.2. Invocation algorithm](#212-invocation-algorithm)
+ - [3. Neoshell infrastructure commands](#3-neoshell-infrastructure-commands)
+ - [4. Neoshell standard library commands](#4-neoshell-standard-library-commands)
+
 
 ## 1. Syntax
 
