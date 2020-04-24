@@ -42,25 +42,25 @@ Factorial :
 ns::require "std";
 
 def-cmd
-	'factorial <n i32>;
-	{
-		if ($n == 0) { return 1 };
-		return ($n * { factorial ($n - 1) });
-	};
+    'factorial <n u32>;
+    {
+        if ($n == 0) { return 1 };
+        return ($n * { factorial ($n - 1) });
+    };
 
 def-macro
-	'static-factorial <n i32>;
-	{
-		# this function generates a AST expression doing the same as `factorial`.
-		# Could have been implemented the same way as `factorial` and would give
-		# the same result.
-		if ($n == 0) { return { ast::integer-literal new 1 } };
-		return {
-			ast::expression new multiply
-				{ ast::integer-literal new $n }
-				{ static-factorial ($n - 1) }
-		};
-	};
+    'static-factorial <n u32>;
+    {
+        # this function generates a AST expression doing the same as `factorial`.
+        # Could have been implemented the same way as `factorial` and would give
+        # the same result.
+        if ($n == 0) { return { ast::integer-literal new 1 } };
+        return {
+            ast::expression new multiply
+            { ast::integer-literal new $n }
+            { static-factorial ($n - 1) }
+        };
+    };
 
 # Computation done at run-time
 std::writeln "Factorial of 5 : " !{ factorial 5 };
