@@ -4,80 +4,124 @@ use super::ast::*;
 
 peg::parser!{
     pub grammar ns_parser() for str {
-        pub rule file() -> Vec<AstCommand>
-            = cl:(command()+) eof() { cl }
 
-        pub rule command() -> AstCommand
-            = _ c:a_command() _ al:(argument()*) _ ";" _ { AstCommand::extends(c, al) }
 
-        rule a_command() -> AstCommand
-            = c:ct_command()    { c }
-            / c:mac_command()   { c }
-            / c:rt_command()    { c }
-        rule ct_command() -> AstCommand
-            = "!" n:name()      { AstCommand::new(AstTime::CompileTime, n) }
-        rule mac_command() -> AstCommand
-            = n:name() "!"      { AstCommand::new(AstTime::Macro, n) }
-        rule rt_command() -> AstCommand
-            = n:name()          { AstCommand::new(AstTime::Runtime, n) }
+		rule pipe_input_description()
+			= "|>" typename()
+		rule pipe_output_description()
+			= typename() "|>"
 
 
 
-        pub rule argument() -> AstArgument
-            = _ a:an_argument() _ { a }
+		// descriptor/command
+		rule desc_command()
+			= "'" _ identifier() _ desc_pipe_input()? _ desc_pipe_output()? _ desc_arg()* _ ";"
 
-        rule an_argument() -> AstArgument
-            = a:name()                              { AstArgument::Name(a) }
-            / a:integer()                           { AstArgument::Integer(a) }
-            / a:float()                             { AstArgument::Float(a) }
-            / a:string()                            { AstArgument::String(a) }
-            / a:switch()                            { AstArgument::Switch(a) }
-            / a:block()                             { AstArgument::Block(a) }
-        pub rule integer() -> i32
-            = v:$(digit()+)                         { v.parse().unwrap() }
-        pub rule float() -> f32
-            = v:$(digit()+ "." digit()+)            { v.parse().unwrap() }
+		// descriptor/command/pipe-input
+		rule desc_pipe_input()
+			= "|>" typename()
 
-        pub rule string() -> String
-            = "\"" v:$((!"\"" string_char())*) "\""  { v.to_string() }
-        rule string_char()
-            = "\\" (" " / "\t" / "\n" / "\r" / "\"")
-            / !"\\" [_]
+		// descriptor/command/pipe-output
+		rule desc_pipe_output()
+			= typename() "|>"
 
-        pub rule switch() -> AstSwitch
-            = s:on_switch()                   { s }
-            / s:off_switch()                  { s }
-            / s:option_switch()               { s }
-        rule on_switch() -> AstSwitch
-            = "+" n:identifier()              { AstSwitch::On(extract_name(n)) }
-        rule off_switch() -> AstSwitch
-            = "-" n:identifier()              { AstSwitch::Off(extract_name(n)) }
-        rule option_switch() -> AstSwitch
-            = "/" n:identifier() a:argument() { AstSwitch::Option(extract_name(n), Box::new(a)) }
-
-        pub rule block() -> AstBlock
-            = b:eval_block() { b }
-            / b:arg_block()  { b }
-        rule eval_block() -> AstBlock
-            = "{" cl:(command()*) "}" { AstBlock::Evaluated(cl) }
-        rule arg_block() -> AstBlock
-            = "&{" cl:(command()*) "}" { AstBlock::Argument(cl) }
+		// descriptor/command/argument
+		rule desc_arg()
+			= desc_arg_static()
+			/ desc_mendatory_arg()
+			/ desc_optional_arg()
 
 
 
-        pub rule name() -> AstName
-            = n:identifier()  { n }
-            / n:variable()    { n }
-            / n:placeholder() { n }
+		// descriptor/command/static-argument
+		rule desc_arg_static()
+			= "'" identifier() _
+		// descriptor/command/mandatory-argument
+		rule desc_mendatory_arg()
+			= "<" _ desc_arg_without_def() _ ">" _
+		// descriptor/command/optional-argument
+		rule desc_optional_arg()
+			= "[" _ desc_arg_with_def() ** semi_sep() _ "]" _
 
-        rule identifier() -> AstName
-            = id:$(identifier_start() (identifier_continue() / "::")*) { AstName::Name(id.to_string()) }
-        rule variable() -> AstName
-            = "$" v:$(digit()+)                                        { AstName::Variable(v.to_string()) }
-            / "$" id:$(identifier_start() identifier_continue()*)      { AstName::Variable(id.to_string()) }
-        rule placeholder() -> AstName
-            = "~"                                                      { AstName::Placeholder }
 
+
+		rule desc_arg_with_def()
+			= desc_arg_pos_with_def()
+			/ desc_arg_pos_list_with_def()
+			/ desc_arg_flag_with_def()
+			/ desc_arg_opt_with_def()
+			/ desc_arg_list_with_def()
+			/ desc_arg_choice_with_def()
+			/ desc_arg_nchoice_with_def()
+			/ desc_arg_mchoice_with_def()
+			/ desc_arg_nmchoice_with_def()
+
+		rule desc_arg_without_def()
+			= desc_arg_pos_without_def()
+			/ desc_arg_pos_list_without_def()
+			/ desc_arg_flag_without_def()
+			/ desc_arg_opt_with_def()
+			/ desc_arg_list_without_def()
+			/ desc_arg_choice_without_def()
+			/ desc_arg_nchoice_without_def()
+			/ desc_arg_mchoice_without_def()
+			/ desc_arg_nmchoice_without_def()
+
+
+
+		// descriptor/argument/positional
+		rule desc_arg_pos_with_def()
+			= desc_arg_pos_without_def() _ some_value()
+		rule desc_arg_pos_without_def()
+			= identifier() _ typename()
+
+		// descriptor/argument/positional-list
+		rule desc_arg_pos_list_with_def()
+			= desc_arg_pos_list_without_def() _ some_value()
+		rule desc_arg_pos_list_without_def()
+			= identifier() "..." _ typename()
+
+		// descriptor/argument/flag
+		rule desc_arg_flag_with_def()
+			= desc_arg_flag_without_def() _ some_value() _ some_value()
+		rule desc_arg_flag_without_def()
+			= "/" identifier()
+
+		// descriptor/argument/option
+		rule desc_arg_opt_with_def()
+			= desc_arg_opt_without_def() _ some_value()
+		rule desc_arg_opt_without_def()
+			= identifier() _ "=" _ typename()
+
+		// descriptor/argument/list
+		rule desc_arg_list_with_def()
+			= desc_arg_list_without_def() _ some_value()
+		rule desc_arg_list_without_def()
+			= identifier() "[]" _ "=" _ typneame()
+
+		// descriptor/argument/choice
+		rule desc_arg_choice_with_def()
+			= desc_arg_choice_without_def() _ some_value()
+		rule desc_arg_choice_without_def()
+			= identifier() _ "->" _ some_value() ** comma_sep()
+
+		// descriptor/argument/named-choice
+		rule desc_arg_nchoice_with_def()
+			= desc_arg_nchoice_without_def() _ some_value()
+		rule desc_arg_nchoice_without_def()
+			= identifier() _ "->" _ some_name_pair_value() ** comma_sep()
+
+		// descriptor/argument/multi-choice
+		rule desc_arg_mchoice_with_def()
+			= desc_arg_mchoice_without_def() _ some_value()
+		rule desc_arg_mchoice_without_def()
+			= identifier() _ "=>" _ some_value() ** comma_sep()
+
+		// descriptor/argument/named-multi-choice
+		rule desc_arg_nmchoice_with_def()
+			= desc_arg_nmchoice_without_def() _ some_value()
+		rule desc_arg_nmchoice_without_def()
+			= identifier() _ "=>" _ some_name_pair_value() ** comma_sep()
 
 
         rule identifier_start()
