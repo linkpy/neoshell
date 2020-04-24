@@ -148,7 +148,7 @@ It's possible to call commands from expressions by using blocks. In that case,
 the Neoshell compiler always interpret the block as evaluated.
 
 ```
-(1 + { sin (2 * $PI * $x); })
+(1 + { sin (2 * $PI * $x) })
 ```
 
 
@@ -211,7 +211,8 @@ item, but denotes an array of type `type`.
 
 Only one `positional-list-descriptor` can be used for a command. Each positional
 argument which does not fit a `positional-descriptor` are collected by the
-single `positional-list-descriptor` if specified.
+single `positional-list-descriptor` if specified. They work similarly to
+variadic functions is C or Python.
 
 
 ##### 1.4.1.3. Flag argument descriptors
@@ -372,11 +373,11 @@ most common uses is with the `chain` macro :
 
 ```
 chain
-	$input-string
-	{ ~ strip-edges }
-	{ ~ replace "-" "_" }
-	{ ~ lower-case }
-	{ std::writeln ~ };
+    $input-string
+    { ~ strip-edges }
+    { ~ replace "-" "_" }
+    { ~ lower-case }
+    { std::writeln ~ };
 
 # this is the same as doing :
 std::writeln !{ !{ !{ $input-string strip-edges } replace "-" "_" } lower-case };
@@ -410,27 +411,27 @@ The commands are invoked based on their pattern and not only on their name :
 
 ```
 def-cmd
-	'puts
-		<v str>
-		;
-	{ ... };
+    'puts
+        <v str>
+        ;
+    { ... };
 
 def-cmd
     'puts
-		<v i32>
-		;
-	{ ... };
+        <v i32>
+        ;
+    { ... };
 
 def-macro
-	'puts
-		<v generic>
-		type = type { type-of $v }
-		;
-	{
-		switch $type
-			str { mac-gen puts !{ convert $v str } }
-			i32 { mac-gen puts !{ convert $v i32 } }
-	};
+    'puts
+        <v generic>
+        type = type { type-of $v }
+        ;
+    {
+        switch $type
+            str { mac-gen puts !{ convert $v str } }
+            i32 { mac-gen puts !{ convert $v i32 } }
+    };
 
 puts "test"; # calls the first implementation
 puts 1234; # calls the second implementation
