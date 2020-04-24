@@ -34,6 +34,41 @@
  - [4. Neoshell standard library commands](#4-neoshell-standard-library-commands)
 
 
+## 0. Examples
+
+Factorial :
+
+```
+ns::require "std";
+
+def-cmd
+	'factorial <n i32>;
+	{
+		if ($n == 0) { return 1 };
+		return ($n * { factorial ($n - 1) });
+	};
+
+def-macro
+	'static-factorial <n i32>;
+	{
+		# this function generates a AST expression doing the same as `factorial`.
+		# Could have been implemented the same way as `factorial` and would give
+		# the same result.
+		if ($n == 0) { return { ast::integer-literal new 1 } };
+		return {
+			ast::expression new multiply
+				{ ast::integer-literal new $n }
+				{ static-factorial ($n - 1) }
+		};
+	};
+
+# Computation done at run-time
+std::writeln "Factorial of 5 : " !{ factorial 5 };
+# Computation done at compile-time
+std::writeln "Factorial of 5 : " !{ static-factorial 5 };
+```
+
+
 ## 1. Syntax
 
 A Neoshell script is written in a UTF-8 encoded file. All of the production
@@ -95,8 +130,8 @@ non-positional arguments and their syntax :
   omitted, `true` when specified) value to the command.
 - Option `name = value` : passes an arbitrary value of a given type to the
   command.
-- List `name[] = v0,v1,...vN` : passes an arbitrary value of a given type to
-  the command.
+- List `name[] = v0,v1,...vN` : passes an arbitrary amount of values of a given
+  type to the command.
 - Choice `name -> value` : passes a value to the command. This argument can
   takes a specified list of values, and specifying a value outside of that
   list results in a compilation error.
@@ -245,7 +280,7 @@ item, but denotes an array of type `type`.
 Only one `positional-list-descriptor` can be used for a command. Each positional
 argument which does not fit a `positional-descriptor` are collected by the
 single `positional-list-descriptor` if specified. They work similarly to
-variadic functions is C or Python.
+variadic functions in C or Python.
 
 
 ##### 1.4.1.3. Flag argument descriptors
