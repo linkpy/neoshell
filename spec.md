@@ -1,6 +1,8 @@
 
 # Neoshell Language Specification
 
+ - [1. Syntax](#1-syntax)
+
 ## 1. Syntax
 
 A Neoshell script is written in a UTF-8 encoded file. All of the production
