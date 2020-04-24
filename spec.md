@@ -32,6 +32,71 @@ command can be a simple identifier following regex rule `[a-zA-Z_][a-zA-Z0-9_\-]
 It can also be a path which uses `::` as a path separator and is widely used
 when using packages.
 
+The `command-name` can be an identifier path, but it can also be a variable
+or an evaluated block, only when the resulting value is an instantiated command.
+
+If the command is the only command in a block, the ending `;` can be omitted.
+These blocks are called one-command blocks.
+
+#### 1.1.1. Piping
+
+Commands can generates or consumes a stream of data and the latter can be
+passed around by using the pipe operator `|>`. A command generating a
+stream is called a generator, and a command consuming a stream is a
+consumer.
+
+Example :
+```
+read "my-file.txt" |> search "term" |> write "my-search-result.txt";
+```
+
+#### 1.1.2. Arguments
+
+When invoking a command receiving arguments, the latter can be formated in
+different ways based on their descriptors. Positional arguments are just values
+passed to the command without special syntax unlike non-positional arguments
+which all have special syntaxes. Here is the exhaustive list of all
+non-positional arguments and their syntax :
+
+- Flag `/name` : passes a binary (by default, `false` if the argument is
+  omitted, `true` when specified) value to the command.
+- Option `name = value` : passes an arbitrary value of a given type to the
+  command.
+- List `name[] = v0,v1,...vN` : passes an arbitrary value of a given type to
+  the command.
+- Choice `name -> value` : passes a value to the command. This argument can
+  takes a specified list of values, and specifying a value outside of that
+  list results in a compilation error.
+- Named choice `name -> value` : works like a choice argument, but uses a
+  name-value pair instead. This kind of argument can be described as "static",
+  as a block or a variable can't contain the name of a value of a named choice.
+- Multi-choice `name => v0,v1,...,vN` : works like a choice argument, but
+  accepts a list of potential values.
+- Named multi-choice `name => n0,n1,...nN` : works like a multi-choice and
+  a named choice.
+
+Positional arguments can't be repeated (except if they are positional list
+arguments which works like variadic arguments in C). Non-positional arguments
+can be repeated, and each kind of argument can have it's own behavior regarding
+its repetitions :
+
+- Repeating a flag argument corresponds to just having that flag specified once.
+  As such, it is considered a mistake to repeat a flag and will generate a
+  warning.
+- Repeating an option corresponds to just having that option set by the last
+  occurrence of that argument (the argument takes the value of the latest
+  occurrence). As such, it is considered a mistake to repeat an option and will
+  generate a warning.
+- Repeating a list corresponds to concatenating all of the occurrences of that
+  argument. Thus, this is a valid usage and can be use to increase readability.
+- Repeating a choice corresponds to just having that choice set by the last
+  occurrence of that argument (the argument takes the value of the latest
+  occurrence). As such, it is considered a mistake to repeat a choice and will
+  generate a warning.
+- Repeating a named choice is equivalent to repeating a choice argument.
+- Repeating a multi-choice is equivalent to repeating a list argument.
+- Repeating a named multi-choice is equivalent to repeating a list argument.
+
 
 ### 1.2. Blocks
 
@@ -211,22 +276,111 @@ a designated list. The value list, denoted by `v0,v1,...,vN` takes at least
 two items and all the items must be of the same type. Spaces are allowed around
 comma. The resulting type of the argument is a list.
 
-When `default` is omitted, the default argument of the argument is an empty list.
+When `default` is omitted, the default value of the argument is an empty list.
 When specified, it must be a list composed of items available in the value list.
 
 
 ##### 1.4.1.9. Named multi-choice argument descriptors
 
+A `named-multi-choice-descriptor`, formed as `name => n0=v0,n1=v1,...,nN=vN [default]`
+describes a non-positional argument which is a list where items are took from a
+designated list. It works the same way as a `multi-choice-descriptor`, but it is
+defined by a value-name pair list. When a command using a
+`named-multi-choice-descriptor`, only the names of the wanted value has to be
+specified. In the command itself, the argument takes the values corresponding to
+the given names.
 
+When `default` is omitted, the default value of the argument is an empty list.
+When specified, it must be a list composed of items available in the value list.
 
 
 ### 1.5. Literals
 
+A literal is a token which represents a constant value known at compile time.
+
+
 #### 1.5.1. Strings
+
+String literals are divided into three flavors :
+
+ - Regular strings, formed by using quotes (`" ... "`). It supports Unicode
+   characters and escapes. Results in a value of type `str`.
+ - Block strings, formed by using quoted curly braces (`"{ ... }"`). It supports
+   Unicode characters, inner block strings and has no escape characters. Results
+   in a value of type `str`.
+ - Character strings, formed by using single quotes (`' C '`). It supports
+   Unicode characters and escapes, but can receive only one character. Results
+   in a value of type `u4` unless a type suffix is added (`u1`, `u2`, `u4`, `u8`).
+
 
 #### 1.5.2. Numbers
 
+
+##### 1.5.2.1. Integers
+
+An integer can be represented in two ways :
+
+- Baseless : `123456789`. In that case, the number is interpreted to have a base of
+  10 (decimal).
+- Based : `0 x 0123456789abcd...` In that case, the number is interpreted
+  to have a custom base. `x` is a letter (lower-case or upper-case) denoting
+  the number's base based on the index of the letter in the alphabet. For
+  example, `b`/`B` would be a binary number, `p`/`P` would be a hexadecimal
+  number, `g`/`G` would be a octal number.
+
+Both formats accepts underscores `_` to add spacing and make the numbers more
+readable.
+
+It can be suffixed by `i1` (signed 1 byte-long number), `i2` (signed 2 byte-long
+number), `i4` (signed 4 byte-long number), `i8` (signed 8 byte-long number),
+`iL` (signed largest number), `u1` (`i1` but unsigned), `u2`, `u4`, `u8` or with
+`uL`.
+
+A "largest number" suffix just denotes a number large enough to contains a
+memory address in it : `i4`/`u4` on 32bits systems and `i8`/`u8` on 64bits
+systems.
+
+
+##### 1.5.2.2. Floats
+
+Floats are represented as `123.456`. They can be suffixed by `f4` (4 byte-long
+float number) or `f8` (8 byte-long float number). The fractional part can be
+omitted : `123.` is still a float. Furthermore, underscores `_` can be added
+for readability.
+
+
 ### 1.6. Packages
+
+Commands name can be paths with the form `identifier :: identifier :: ...`.
+These path represents packages and sub-packages. By default, no packages
+has its scope imported in the current file, meaning that calling anything from
+that package requires its package prefix. The Neoshell infrastructure contains
+commands to deal with packages and scope importation.
+
+
+### 1.7. Variables
+
+A variable has the form of `$identifier`. Variables can be accessed from their
+whole scope, inside command invocations or expressions. Variables are initially
+declared by some specialized CT commands.
+
+
+### 1.8. Placeholders
+
+The placeholder character `~` is mostly used for MAC commands. One of its
+most common uses is with the `chain` macro :
+
+```
+chain
+	$input-string
+	{ ~ strip-edges }
+	{ ~ replace "-" "_" }
+	{ ~ lower-case }
+	{ std::writeln ~ };
+
+# this is the same as doing :
+std::writeln !{ !{ !{ $input-string strip-edges } replace "-" "_" } lower-case };
+```
 
 
 ## 2. Language's constructs
@@ -251,3 +405,65 @@ invocation syntax) but are declared using 3 different commands
 
 
 #### 2.1.2. Invocation algorithm
+
+The commands are invoked based on their pattern and not only on their name :
+
+```
+def-cmd
+	'puts
+		<v str>
+		;
+	{ ... };
+
+def-cmd
+    'puts
+		<v i32>
+		;
+	{ ... };
+
+def-macro
+	'puts
+		<v generic>
+		type = type { type-of $v }
+		;
+	{
+		switch $type
+			str { mac-gen puts !{ convert $v str } }
+			i32 { mac-gen puts !{ convert $v i32 } }
+	};
+
+puts "test"; # calls the first implementation
+puts 1234; # calls the second implementation
+
+puts "test" type = str; # calls the third implementation
+# this invocation is a macro, and thus its result is equivalent to :
+# puts "test";
+```
+
+For each invocation, the Neoshell infrastructure checks for each possible
+commands that could fit that invocation. If only one is found, it is used. If
+multiple commands are found, the most precise invocation will be used. Finally,
+if no commands are found, an error is raised.
+
+The precision of an invocation is defined by how much non-positional arguments
+are omitted and by checking the types of all of the arguments. As shown in the
+example above, the macro fits all the invocations with only one positional
+argument. But in the case of a string, the first declaration of the command
+is more precise and thus is being called instead of the macro.
+
+On top of that, some rules are applied based on the execution time of the
+command :
+
+- A CT command can only calls other CT commands which aren't itself.
+- A MAC command can only calls other MAC commands or RT commands.
+- A RT command can only calls other RT commands or MAC commands.
+
+Since RT commands can not have generic types as arguments or return value, this
+algorithm allows for generic implementations of a command by using a routing
+MAC command, which generates the correct code for the given arguments and
+expected return value (if any).
+
+
+## 3. Neoshell infrastructure commands
+
+## 4. Neoshell standard library commands
